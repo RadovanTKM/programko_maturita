@@ -13,6 +13,7 @@ SIRKA, VYSKA = 300, 300
 screen = pygame.display.set_mode([SIRKA, VYSKA])
 pygame.display.set_caption('The Best Pong On Earth')
 
+
 timer = pygame.time.Clock()
 framerate = 60
 
@@ -20,10 +21,12 @@ font = pygame.font.Font('obrazek1.ttf', 20)  # druhý člen je velikost fontu
 
 # vlastnosti
 hráč_y = 130
+hráč2_y = 130
 počítač_y = 130
 míč_x = 145
 míč_y = 145
 směr_hráče = 0
+směr_hráče2 = 0
 rychlost_hráče = 4
 směr_x_míčku = 1  # míček poletí pravé strany
 směr_y_míčku = 1  # míček poletí dolů
@@ -149,19 +152,52 @@ def kontrola_výhry(míč_x, konec_W):
 
 # vykreslení (zobrazení předmětů)
 running = True
-while running:
+while running: # loop který pořad běžý dokud je running True
     timer.tick(framerate)
     screen.fill(black)
     konec_hry = kontrola_konce_hry(míč_x, konec_hry)  # kontroluje kolizi míčku do strany
     konec_W = kontrola_výhry(míč_x, konec_W)
     hráč = pygame.draw.rect(screen, white, [5, hráč_y, 10, 40])
-    počítač = pygame.draw.rect(screen, white, [285, počítač_y, 10, 40])
+    if rezim_hry == 'pc':
+        počítač = pygame.draw.rect(screen, white, [285, počítač_y, 10, 40])
+    else:
+        hráč2 = pygame.draw.rect(screen, white, [285, hráč2_y, 10, 40])
     míček = pygame.draw.rect(screen, barva_míčku, [míč_x, míč_y, 13,13])
     text_skóre = font.render('Skóre: '+ str(skóre), True, white, black) 
     screen.blit(text_skóre, (110, 5)) 
     text_jméno = font.render(f'Hráč: {jméno_hráče}', True, white)
     screen.blit(text_jméno, (110, 30))
+    
+       # pohyb hráčů/počítače
+    hráč_y += směr_hráče * rychlost_hráče
+    hráč_y = max(0, min(VYSKA - 40, hráč_y))
+    if rezim_hry == 'pc':
+        počítač_y = better_ai(míč_y, počítač_y)
+    else:
+        hráč2_y += směr_hráče2 * rychlost_hráče
+        hráč2_y = max(0, min(VYSKA - 40, hráč2_y))
 
+    směr_x_míčku, směr_y_míčku, míč_x ,míč_y = smart_ai(směr_x_míčku, směr_y_míčku, míč_x, míč_y, rychlost_x_míčku, rychlost_y_míčku)
+
+    # key bind pro hráče
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_w:
+                směr_hráče = -1
+            if event.key == pygame.K_s:
+                směr_hráče = 1
+            if rezim_hry == 'hrac':
+                if event.key == pygame.K_UP:
+                    směr_hráče2 = -1
+                if event.key == pygame.K_DOWN:
+                    směr_hráče2 = 1
+        if event.type == pygame.KEYUP:
+            if event.key in [pygame.K_w, pygame.K_s]:
+                směr_hráče = 0
+            if rezim_hry == 'hrac' and event.key in [pygame.K_UP, pygame.K_DOWN]:
+                směr_hráče2 = 0
 
     # konec hry    
     if not konec_hry and not konec_W:  # touto podmínkou říkáme, že míček se aktualizuje pokud konec hry je false
