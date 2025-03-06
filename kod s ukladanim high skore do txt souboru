@@ -1,0 +1,343 @@
+from random import randint
+import pygame
+pygame.init()
+
+# oblíbené barvy
+black = (0,0,0)
+white = (255, 255, 255)
+red = (239, 20, 26)
+green = (15, 207, 20)
+
+# obrazovka
+SIRKA, VYSKA = 300, 300
+screen = pygame.display.set_mode([SIRKA, VYSKA])
+pygame.display.set_caption('The Best Pong On Earth')
+
+
+timer = pygame.time.Clock()
+framerate = 60
+
+font = pygame.font.Font('obrazek1.ttf', 20)  # druhý člen je velikost fontu
+
+# vlastnosti
+hráč_y = 130
+hráč2_y = 130
+počítač_y = 130
+míč_x = 145
+míč_y = 145
+směr_hráče = 0
+směr_hráče2 = 0
+rychlost_hráče = 4
+rychlost_hráče2 = 4
+směr_x_míčku = 1  # míček poletí pravé strany
+směr_y_míčku = 1  # míček poletí dolů
+rychlost_x_míčku = 1  # rychlost míčku po ose x  
+rychlost_y_míčku = 1  # rychlost míčku po ose y
+skóre = 0  # skore je 0 když hra začíná
+barva_míčku = white  # barva míčku ze začátku hry je bílá
+rychlost_počítače = 4
+konec_hry = False
+konec_W = False
+
+# Funkce pro uložení nového skóre do souboru
+def save_high_score(jméno_hráče, skóre):
+    try:
+        # Načtení aktuálních skóre
+        with open("high_score.txt", "r") as file:
+            high_scores = file.readlines()
+
+        # Zkontroluj, zda už hráč má skóre
+        player_found = False
+        for i, line in enumerate(high_scores):
+            name, current_score = line.strip().split(": ")
+            if name == jméno_hráče:
+                if int(current_score) < skóre:  # Pokud je nové skóre lepší
+                    high_scores[i] = f"{jméno_hráče}: {skóre}\n"  # Uprav skóre
+                player_found = True
+                break
+
+        if not player_found:
+            high_scores.append(f"{jméno_hráče}: {skóre}\n")  # Přidej nového hráče
+
+        # Seřaď skóre podle hodnoty (z nejvyššího)
+        high_scores.sort(key=lambda x: int(x.split(": ")[1]), reverse=True)
+        
+        # Udržuj pouze top 10 skóre
+        high_scores = high_scores[:10]
+
+        # Ulož výsledky
+        with open("high_score.txt", "w") as file:
+            file.writelines(high_scores)
+    except FileNotFoundError:
+        # Pokud soubor neexistuje, vytvoř ho
+        with open("high_score.txt", "w") as file:
+            file.write(f"{jméno_hráče}: {skóre}\n")
+            
+
+
+def přihlašovací_obrazovka():
+    """
+    Funkce zobrazující přihlašovací obrazovku, kde uživatel může zadat své jméno a heslo.
+    Heslo se při zadávání zobrazuje jako hvězdičky.
+    Přepínání mezi poli se provádí klávesou TAB.
+    Potvrzení přihlášení probíhá stiskem ENTER.
+    Zobrazuje blikající kurzor v aktivním poli.
+    
+    :return: Vrací pouze zadané uživatelské jméno.
+    """
+    jméno = ''  # Uchovává zadané uživatelské jméno
+    heslo = ''  # Uchovává zadané heslo
+    aktivní_input = 'jméno'  # Určuje, do kterého pole se aktuálně zapisuje
+    clock = pygame.time.Clock()  # Hodiny pro řízení obnovovací frekvence
+    
+    while True:
+        screen.fill(black)  # Vyčištění obrazovky černou barvou
+        
+        # Získání aktuálního času pro blikání kurzoru
+        čas = pygame.time.get_ticks()
+        kurzor = '|' if (čas // 500) % 2 == 0 else ''  # Kurzoru bliká každých 500 ms
+        
+        # Vykreslení textu pro uživatelské jméno
+        text_jméno = font.render('Username: ' + jméno + (kurzor if aktivní_input == 'jméno' else ''), True, white)
+        screen.blit(text_jméno, (50, 100))
+        
+        # Vykreslení textu pro heslo (zobrazené jako hvězdičky)
+        text_heslo = font.render('Password: ' + '*' * len(heslo) + (kurzor if aktivní_input == 'heslo' else ''), True, white)
+        screen.blit(text_heslo, (50, 150))
+        
+        pygame.display.flip()  # Aktualizace obrazovky, aby se změny projevily
+        
+        for event in pygame.event.get():  # Smyčka pro zpracování událostí
+            if event.type == pygame.QUIT:  # Pokud uživatel zavře okno
+                pygame.quit()  # Ukončení Pygame
+                quit()  # Ukončení programu
+            if event.type == pygame.KEYDOWN:  # Pokud je stisknuta klávesa
+                if event.key == pygame.K_RETURN:  # Stisk ENTER -> přihlášení
+                    return jméno  # Vrací pouze uživatelské jméno
+                elif event.key == pygame.K_TAB:  # Přepínání mezi jménem a heslem klávesou TAB
+                    aktivní_input = 'heslo' if aktivní_input == 'jméno' else 'jméno'  # Přepne aktivní vstup
+                elif event.key == pygame.K_BACKSPACE:  # Mazání posledního znaku klávesou BACKSPACE
+                    if aktivní_input == 'jméno':  # Pokud je aktivní vstup jméno
+                        jméno = jméno[:-1]  # Odstraní poslední znak ze jména
+                    else:  # Pokud je aktivní vstup heslo
+                        heslo = heslo[:-1]  # Odstraní poslední znak z hesla
+                else:  # Pokud je stisknuta jiná klávesa
+                    if aktivní_input == 'jméno':  # Pokud je aktivní vstup jméno
+                        jméno += event.unicode  # Přidání znaku do jména
+                    else:  # Pokud je aktivní vstup heslo
+                        heslo += event.unicode  # Přidání znaku do hesla
+
+
+        pygame.display.flip()
+        timer.tick(framerate)
+        
+
+# volání přihlašovací obrazovky
+jméno_hráče = přihlašovací_obrazovka()
+
+rezim_hry = None
+
+def zobrazit_menu():
+    global rezim_hry
+    while rezim_hry is None:
+        screen.fill(black)
+        text1 = font.render('Hráč vs. Počítač', True, black)
+        text2 = font.render(' Hráč vs. Hráč', True, black)
+        tlacitko1 = pygame.draw.rect(screen, white, [50, 100, 200, 40])
+        tlacitko2 = pygame.draw.rect(screen, white, [50, 160, 200, 40])
+        screen.blit(text1, (70, 110))
+        screen.blit(text2, (80, 170))
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if tlacitko1.collidepoint(event.pos):
+                    rezim_hry = 'pc'
+                elif tlacitko2.collidepoint(event.pos):
+                    rezim_hry = 'hrac'
+        
+        pygame.display.flip()
+        timer.tick(framerate)
+
+zobrazit_menu()
+
+# definování počítače
+def better_ai(míč_y, počítač_y):
+    rychlost_počítače = 3
+    if počítač_y + 15 > míč_y + 5:
+        počítač_y -= rychlost_počítače
+    elif počítač_y + 15 < míč_y + 5:
+        počítač_y += rychlost_počítače
+    return počítač_y
+
+
+# kolize míčku
+def smart_ai(směr_x_míčku, směr_y_míčku, míč_x, míč_y, rychlost_x_míčku, rychlost_y_míčku):
+    if směr_x_míčku == 1 and míč_x < 290:
+        míč_x += rychlost_x_míčku
+    elif směr_x_míčku == 1 and míč_x >= 290:
+        směr_x_míčku *= -1
+    if směr_x_míčku == -1 and míč_x > 0:
+        míč_x -= rychlost_x_míčku
+    elif směr_x_míčku == -1 and míč_x <= 0:
+        směr_x_míčku *= -1
+    if směr_y_míčku == 1 and míč_y < 290:
+        míč_y += rychlost_y_míčku
+    elif směr_y_míčku == 1 and míč_y >= 290:
+        směr_y_míčku *= -1
+    if směr_y_míčku == -1 and míč_y > 0:
+        míč_y -= rychlost_y_míčku
+    elif směr_y_míčku == -1 and míč_y <= 0:
+        směr_y_míčku *= -1
+    return směr_x_míčku, směr_y_míčku, míč_x, míč_y
+
+
+def kontrola_kolize(míček, hráč, počítač, směr_x_míčku, skóre):
+    global barva_míčku  # odkazuje na existující proměnlivost míčku
+    if míček.colliderect(hráč) and směr_x_míčku == -1:
+        směr_x_míčku = 1  # pokud proběhne kolize míčku s hráčem tak se odrazí směrem na pravou stranu 
+        skóre += 1
+        barva_míčku = (randint(0,255),randint(0,255),randint(0,255))  # pokaždé co se zvýší skóre tak se změní barva míčku
+    elif míček.colliderect(počítač) and směr_x_míčku == 1:
+        směr_x_míčku = -1  # pokud proběhne kolize míčku s počítačem tak se odrazí směrem na levou stranu 
+        skóre += 1
+        barva_míčku = (randint(0,255),randint(0,255),randint(0,255))
+    return směr_x_míčku, skóre, barva_míčku
+
+
+def kontrola_konce_hry(míč_x, konec_hry):
+    if míč_x <= 0  and konec_hry == False:
+        konec_hry = True
+    return konec_hry
+
+def kontrola_výhry(míč_x, konec_W):
+    if míč_x >= 290 and konec_W == False:
+        konec_W = True
+    return konec_W
+
+
+# vykreslení (zobrazení předmětů)
+running = True
+while running: # loop který pořad běžý dokud je running True
+    timer.tick(framerate)
+    screen.fill(black)
+    konec_hry = kontrola_konce_hry(míč_x, konec_hry)  # kontroluje kolizi míčku do strany
+    konec_W = kontrola_výhry(míč_x, konec_W)
+    hráč = pygame.draw.rect(screen, white, [5, hráč_y, 10, 40])
+    if rezim_hry == 'pc':
+        počítač = pygame.draw.rect(screen, white, [285, počítač_y, 10, 40])
+    else:
+        hráč2 = pygame.draw.rect(screen, white, [285, hráč2_y, 10, 40])
+    míček = pygame.draw.rect(screen, barva_míčku, [míč_x, míč_y, 13,13])
+    text_skóre = font.render('Skóre: '+ str(skóre), True, white, black) 
+    screen.blit(text_skóre, (110, 5)) 
+    text_jméno = font.render(f'Hráč: {jméno_hráče}', True, white)
+    screen.blit(text_jméno, (110, 30))
+    
+       # pohyb hráčů/počítače
+    hráč_y += směr_hráče * rychlost_hráče
+    hráč_y = max(0, min(VYSKA - 40, hráč_y))
+    if rezim_hry == 'pc':
+        počítač_y = better_ai(míč_y, počítač_y)
+    else:
+        hráč2_y += směr_hráče2 * rychlost_hráče2
+        hráč2_y = max(0, min(VYSKA - 40, hráč2_y))
+
+
+    # konec hry    
+    if not konec_hry and not konec_W:  # touto podmínkou říkáme, že míček se aktualizuje pokud konec hry je false
+        počítač_y = better_ai(míč_y, počítač_y)
+        směr_x_míčku, směr_y_míčku, míč_x ,míč_y = smart_ai(směr_x_míčku, směr_y_míčku, míč_x, míč_y, rychlost_x_míčku, rychlost_y_míčku) # ai sleduje míček
+        if rezim_hry == 'pc':
+            směr_x_míčku, skóre, barva_míčku = kontrola_kolize(míček, hráč, počítač, směr_x_míčku, skóre)
+        else:
+            směr_x_míčku, skóre, barva_míčku = kontrola_kolize(míček, hráč, hráč2, směr_x_míčku, skóre)
+
+    if konec_hry:  
+            # resetování hry   
+        save_high_score(jméno_hráče, skóre)
+ 
+        resetovací_čudlík = pygame.draw.rect(screen, black, [0, 0, 300, 300])  # kontroluje jestli hráč klikne pro novou hru
+        reset_text = font.render('Klikni Pro Novou Hru', True, white, black)  # nejdříve se musí vyrenderovat a poté se musí vyobrazit na obrazovku pomocí blit funkce
+        screen.blit(reset_text, (45, 150))
+        
+        konec_hry_text = font.render('! PROHRÁL SI !', True, red, black)  # nejdříve se musí vyrenderovat a poté se musí vyobrazit na obrazovku pomocí blit funkce
+        screen.blit(konec_hry_text, (85, 120)) 
+        
+
+    # výhra     
+    if konec_W:
+            # resetování hry 
+            
+        save_high_score(jméno_hráče, skóre)  
+          
+        resetovací_čudlík = pygame.draw.rect(screen, black, [0, 0, 300, 300])  # kontroluje jestli hráč klikne pro novou hru
+        reset_text = font.render('Klikni Pro Novou Hru', True, white, black)  # nejdříve se musí vyrenderovat a poté se musí vyobrazit na obrazovku pomocí blit funkce
+        screen.blit(reset_text, (45, 150))
+        
+        konec_hry_text = font.render('! VYHRÁL SI !', True, green, black)  # nejdříve se musí vyrenderovat a poté se musí vyobrazit na obrazovku pomocí blit funkce
+        screen.blit(konec_hry_text, (90, 120)) 
+        
+
+    # key bind pro hráče
+    for event in pygame.event.get():
+       if event.type == pygame.QUIT:
+           running = False
+       if event.type == pygame.KEYDOWN:
+           if event.key == pygame.K_w:
+               směr_hráče = -1
+           if event.key == pygame.K_s:
+               směr_hráče = 1
+           if rezim_hry == 'hrac':
+             if event.key == pygame.K_UP:
+                směr_hráče2 = -1
+             if event.key == pygame.K_DOWN:
+                směr_hráče2 = 1
+       if event.type == pygame.KEYUP:
+            if event.key in [pygame.K_w, pygame.K_s]:
+                směr_hráče = 0
+            if rezim_hry == 'hrac' and event.key in [pygame.K_UP, pygame.K_DOWN]:
+                směr_hráče2 = 0
+
+       if event.type == pygame.MOUSEBUTTONDOWN and konec_hry or event.type == pygame.MOUSEBUTTONDOWN and konec_W : # funkce pro tlačítko stisknutí pravý tlačítko myši
+               konec_hry = False
+               konec_W = False
+               hráč_y = 130
+               počítač_y = 130
+               míč_x = 145
+               míč_y = 145
+               směr_hráče = 0  # vlastnosti se resetují na 0 po kliknutí na tlačítko konec hry
+               rychlost_hráče = 4
+               rychlost_hráče2 = 4
+               směr_x_míčku = 1 
+               směr_y_míčku = 1 
+               rychlost_x_míčku = 1
+               rychlost_y_míčku = 1
+               rychlost_počítače = 1
+               skóre = 0
+
+    hráč_y += rychlost_hráče * směr_hráče
+    if hráč_y < 0:
+        hráč_y = 0
+
+    elif hráč_y > 300 - 40:  # 300 je výška obrazovky, 40 je výška pálky , kolize hráče 
+        hráč_y = 300 - 40
+        
+    hráč2_y += rychlost_hráče2 * směr_hráče2
+    if hráč2_y < 0:
+        hráč2_y = 0
+    elif hráč2_y > 300 - 40:
+        hráč2_y = 300 - 40
+        
+    elif počítač_y > 300 - 40: # kolize počítače
+        počítač_y = 300 - 40
+
+    rychlost_x_míčku = 2 + (skóre//7)  # rychlost míčku se pokaždé zvyšuje o 2 s odrazem od pálky když dosáhneme 7 bodů po ose X
+    rychlost_y_míčku = 1 + (skóre//10)  # rychlost míčku se pokaždé zvýší o 1 s odrazem od pálky pod dosáhnutí 10 bodů po ose Y
+    rychlost_počítače = 1 + (skóre//17)
+
+    pygame.display.flip()
+
+pygame.quit()
