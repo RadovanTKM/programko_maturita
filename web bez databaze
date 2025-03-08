@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <!-- Nastavení znakové sady pro český jazyk -->
+    <meta charset="UTF-8">
+    <!-- Nastavení viewport pro responsivní design -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Best Pong On Earth</title>
+    
+    <style>
+        /* Globální styly pro tělo stránky */
+        body {
+            font-family: Arial, sans-serif;  /* Nastavení písma */
+            background-color: #222;  /* Temné pozadí */
+            color: white;  /* Bílé písmo */
+            text-align: center;  /* Zarovnání textu na střed */
+        }
+
+        /* Kontejner pro obsah stránky s centrálním zarovnáním */
+        .container {
+            width: 60%;  /* Šířka kontejneru */
+            margin: auto;  /* Automatické okraje pro centrální pozici */
+            background: #333;  /* Tmavší pozadí pro kontejner */
+            padding: 20px;  /* Vnitřní okraje */
+            border-radius: 10px;  /* Zaoblené rohy */
+        }
+
+        /* Třída pro skrytí elementů */
+        .hidden {
+            display: none;  /* Skrytí elementu (nastavení display: none) */
+        }
+
+        /* Styl pro tlačítka */
+        button {
+            padding: 10px 20px;  /* Vnitřní okraje tlačítka */
+            margin: 10px;  /* Vnější okraje */
+            border: none;  /* Bez rámečku */
+            cursor: pointer;  /* Změna kurzoru na ruku při najetí */
+            font-size: 16px;  /* Velikost písma */
+        }
+
+        /* Styl pro tlačítko přihlášení */
+        .btn-login { background: green; color: white; }  /* Zelené pozadí a bílé písmo */
+        
+        /* Styl pro tlačítko odhlášení */
+        .btn-logout { background: red; color: white; }  /* Červené pozadí a bílé písmo */
+
+        /* Styl pro textová pole (inputy) */
+        .input-box {
+            padding: 10px;  /* Vnitřní okraje */
+            margin: 5px;  /* Vnější okraje */
+            width: 80%;  /* Šířka pole */
+        }
+
+        /* Styl pro obrázky */
+        img {
+            width: 40%;  /* Šířka obrázku */
+            border-radius: 10px;  /* Zaoblené rohy */
+            margin: 20px 0;  /* Vnější okraje nahoře a dole */
+        }
+
+        /* Styl pro odkaz "Zaregistruj se" - oranžová barva */
+        .register-link {
+            color: orange;
+        }
+
+        /* Styl pro odkaz "Přihlaste se" - žlutá barva */
+        .login-link {
+            color: yellow;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hlavní kontejner pro obsah webu -->
+<div class="container">
+    <h1>The Best Pong On Earth</h1> <!-- Nadpis stránky -->
+    <p>Klasická hra Pong s AI a multiplayer režimem!</p> <!-- Popis stránky -->
+
+    <!-- Sekce pro přihlášení -->
+    <div id="auth-section">
+        <h2>Přihlášení</h2> <!-- Nadpis pro přihlášení -->
+        <input type="text" id="login-username" class="input-box" placeholder="Uživatelské jméno">  <!-- Vstup pro uživatelské jméno -->
+        <input type="password" id="login-password" class="input-box" placeholder="Heslo">  <!-- Vstup pro heslo -->
+        <br>
+        <!-- Tlačítko pro přihlášení, spustí funkci login() -->
+        <button class="btn-login" onclick="login()">Přihlásit se</button>
+        <!-- Odkaz pro přechod na registraci -->
+        <p>Nemáte účet? <a href="#" onclick="showRegister()" class="register-link">Zaregistruj se</a></p>
+    </div>
+
+    <!-- Sekce pro registraci (skrytá při přihlášení) -->
+    <div id="register-section" class="hidden">
+        <h2>Registrace</h2> <!-- Nadpis pro registraci -->
+        <input type="text" id="register-username" class="input-box" placeholder="Zvolte uživatelské jméno">  <!-- Vstup pro uživatelské jméno pro registraci -->
+        <input type="password" id="register-password" class="input-box" placeholder="Zvolte heslo">  <!-- Vstup pro heslo pro registraci -->
+        <br>
+        <!-- Tlačítko pro registraci, spustí funkci register() -->
+        <button class="btn-login" onclick="register()">Registrovat</button>
+        <!-- Odkaz pro přechod na přihlášení -->
+        <p>Již máte účet? <a href="#" onclick="showLogin()" class="login-link">Přihlaste se</a></p>
+    </div>
+
+    <!-- Sekce pro uživatelský obsah po přihlášení -->
+    <div id="user-content" class="hidden">
+        <h2>Vítejte, <span id="username-display"></span>!</h2>  <!-- Zobrazení vítání s uživatelským jménem -->
+        <img src="pong_screenshot.png" alt="Ukázka hry Pong">  <!-- Ukázkový obrázek ze hry Pong -->
+        <h2>Seznam funkcí hry:</h2>  <!-- Nadpis pro seznam funkcí -->
+        <ul>
+            <li>Možnost hry proti AI nebo druhému hráči</li>  <!-- Funkce 1 -->
+            <li>AI využívá algoritmus sledování míčku</li>  <!-- Funkce 2 -->
+            <li>Ukládání skóre hráčů</li>  <!-- Funkce 3 -->
+            <li>Přihlášení uživatele</li>  <!-- Funkce 4 -->
+        </ul>
+
+        <h2>Algoritmy a knihovny:</h2>  <!-- Nadpis pro algoritmy a knihovny -->
+        <ul>
+            <li><b>Knihovny:</b> Pygame, PyQt5</li>  <!-- Seznam knihoven -->
+            <li><b>AI Algoritmus:</b> Sledování pozice míčku</li>  <!-- Seznam AI algoritmů -->
+            <li><b>Kolize:</b> Detekce kolize míčku s hráčem a zdmi</li>  <!-- Seznam kolizních detekcí -->
+        </ul>
+
+        <h2>Autoři:</h2>  <!-- Nadpis pro autory -->
+        <p>Jméno autora: (Radovan Todorov)</p>  <!-- Jméno autora -->
+
+        <h2>Odkaz na stažení:</h2>  <!-- Nadpis pro GitHub odkaz -->
+        <!-- Odkaz na GitHub repo -->
+        <a href="https://github.com/RadovanTKM/programko_maturita/tree/main" target="_blank" style="color: lightblue;">GitHub Repozitář</a>
+
+        <br><br>
+        <!-- Tlačítko pro odhlášení, spustí funkci logout() -->
+        <button class="btn-logout" onclick="logout()">Odhlásit se</button>
+    </div>
+</div>
+
+<!-- JavaScript pro funkce přihlášení, registrace a odhlášení -->
+<script>
+    // Funkce pro zobrazení sekce registrace a skrytí sekce přihlášení
+    function showRegister() {
+        document.getElementById("auth-section").classList.add("hidden");  // Skrytí sekce přihlášení
+        document.getElementById("register-section").classList.remove("hidden");  // Zobrazení sekce registrace
+    }
+
+    // Funkce pro zobrazení sekce přihlášení a skrytí sekce registrace
+    function showLogin() {
+        document.getElementById("auth-section").classList.remove("hidden");  // Zobrazení sekce přihlášení
+        document.getElementById("register-section").classList.add("hidden");  // Skrytí sekce registrace
+    }
+
+    // Funkce pro registraci nového uživatele
+    function register() {
+        let username = document.getElementById("register-username").value;  // Získání uživatelského jména
+        let password = document.getElementById("register-password").value;  // Získání hesla
+
+        // Kontrola, zda jsou vyplněna všechna pole
+        if (username === "" || password === "") {
+            alert("Vyplňte všechna pole!");  // Zobrazení varování, pokud některé pole chybí
+            return;
+        }
+
+        // Kontrola, zda uživatel již existuje
+        if (localStorage.getItem(username)) {
+            alert("Tento uživatel již existuje!");  // Varování, pokud uživatelské jméno již existuje
+            return;
+        }
+
+        // Uložení nového uživatele do localStorage
+        localStorage.setItem(username, password);
+        alert("Registrace úspěšná! Nyní se můžete přihlásit.");
+        showLogin();  // Zobrazení sekce pro přihlášení
+    }
+
+    // Funkce pro přihlášení uživatele
+    function login() {
+        let username = document.getElementById("login-username").value;  // Získání uživatelského jména
+        let password = document.getElementById("login-password").value;  // Získání hesla
+
+        // Získání uloženého hesla pro daného uživatele
+        let storedPassword = localStorage.getItem(username);
+
+        // Kontrola, zda uživatel existuje a zda je správné heslo
+        if (!storedPassword) {
+            alert("Uživatel neexistuje! Nejprve se registrujte.");  // Pokud uživatel neexistuje
+            return;
+        }
+
+        if (storedPassword !== password) {
+            alert("Špatné heslo!");  // Pokud je heslo nesprávné
+            return;
+        }
+
+        // Uložení přihlášeného uživatele a zobrazení jeho obsahu
+        localStorage.setItem("loggedInUser", username);
+        checkLogin();  // Prověření stavu přihlášení
+    }
+
+    // Funkce pro odhlášení uživatele
+    function logout() {
+        localStorage.removeItem("loggedInUser");  // Odstranění přihlášeného uživatele z localStorage
+        checkLogin();  // Prověření stavu přihlášení
+    }
+
+    // Funkce pro kontrolu přihlášení uživatele
+    function checkLogin() {
+        let loggedInUser = localStorage.getItem("loggedInUser");  // Získání přihlášeného uživatele
+
+        // Pokud je uživatel přihlášen, zobrazí se obsah pro uživatele
+        if (loggedInUser) {
+            document.getElementById("username-display").innerText = loggedInUser;  // Zobrazení uživatelského jména
+            document.getElementById("auth-section").classList.add("hidden");  // Skrytí sekce přihlášení
+            document.getElementById("register-section").classList.add("hidden");  // Skrytí sekce registrace
+            document.getElementById("user-content").classList.remove("hidden");  // Zobrazení obsahu pro přihlášené
+        } else {
+            // Pokud uživatel není přihlášen, zobrazí se sekce pro přihlášení
+            document.getElementById("auth-section").classList.remove("hidden");
+            document.getElementById("user-content").classList.add("hidden");
+        }
+    }
+
+    // Prověření přihlášení při načtení stránky
+    checkLogin();
+</script>
+
+</body>
+</html>
