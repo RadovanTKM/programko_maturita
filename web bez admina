@@ -1,8 +1,49 @@
+<?php
+
+// Spustí se sekce.
+session_start();
+
+include "functions.php"; 
+
+// Podmínky pro přihlášení, pokud se uživatel jmenuje admin a heslo je admin tak to přihlásí do session. Pokud je špatně přihlášení tak to nepřihlásí a napíše to.
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if(isset($_POST['username']) && isset($_POST["password"])){
+        $username = trim($_POST["username"]);
+        $password = trim($_POST["password"]);
+    
+        if ($username === "admin" && $password === "admin") {
+            $_SESSION["admin"] = true;
+            echo "Byl jsi přihlášen.";
+        } else {
+            echo("Špatné jméno nebo heslo!");
+        }
+    }
+}
+
+// Když uživatel klikne na tlačítko odhlásit tak to odhlásí uživatele, smaže session a vrátí na hlavní stránku.
+if (isset($_GET["logout"])) {
+    session_destroy();
+    header("Location: index.php");
+    exit();
+}
+
+    // Dotaz na získání dat
+    $sql = "SELECT u.user_id, u.username, MAX(s.score) AS score
+            FROM 1AUsers u
+            INNER JOIN 1AScores s ON u.user_id = s.user_id
+            GROUP BY u.user_id, u.username
+            ORDER BY score DESC;";
+    $result = $conn->query($sql);
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Radovan Todorov">
     <title>The Best Pong On Earth</title>
     <style>
         body {
@@ -115,6 +156,46 @@
             margin: 20px 0;
             box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
         }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #0f3460; /* Tmavě modré pozadí tabulky */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); /* Neonový efekt */
+    }
+
+        td {
+            border: 2px solid #1a1a2e; /* Tmavý rámeček */
+            padding: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        th {
+            background-color:rgb(170, 3, 30); /* Červena hlavička tabulky */
+            color: white;
+            font-weight: bold;
+            padding: 12px;
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) {
+            background-color: #16213e; /* Střídavě tmavě modré řádky */
+}
+
+        tr:hover {
+            background-color:rgba(43, 255, 0, 0.14); /* Při najetí oranžové zvýraznění */
+            color: white;
+}
+
+        .containe {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 100%;
+            padding: 0 10px;
+    }
     </style>
 </head>
 <body>
@@ -143,18 +224,53 @@
 
     <div id="user-content" class="hidden">
         <h2>Vítejte, <span id="username-display"></span>!</h2>
-        <img src="pong_screenshot.png" alt="Ukázka hry Pong">
+        <!-- Tabulka se záznamy-->
+<div class="container w-50 p-4">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr class="table-primary">
+                <th scope="col">Jméno: </th>
+                <th scope="col">Skóre: </th>
+                <!-- Sloupec se zobrazí zda-li je uživatel přihlášený jako admin.-->
+                <?php if (isset($_SESSION["admin"])): ?> <th>Smazání záznamu</th> <?php endif; ?>
+                </tr>
+            </thead>
+            <?php
+            // Bere data z databáze a bude to probíhat dokud budou záznamy v databázi.
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    echo "<tr>
+                            <td>" . htmlspecialchars($row["username"]) . "</td>
+                            <td>" . htmlspecialchars($row["score"]) . "</td>";
+                    // Zobrazí se zda-li je uživatel přihlášený.
+                    if (isset($_SESSION["admin"])) {
+                        echo "<td><a href='delete.php?id=" . $row["user_id"] . "' onclick='return confirm(\"Opravdu chcete smazat tento záznam?\")' class='text-danger becko'>❌</a></td>";
+                    }
+                    echo "</tr>";
+                }
+                // Zda-li nejsou data v databázi tak to vypíše níže. 
+            } else {
+                echo "<tr><td colspan='3'>Žádná data</td></tr>";
+            }
+            ?>
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
         <h2>Seznam funkcí hry:</h2>  <!-- Nadpis pro seznam funkcí -->
         <ul>
+            <li>Každý hráč může mít více záznamů v tabulce skore , což odpovídá vztahu 1:N</li>  <!-- Funkce 0 -->
             <li>Možnost hry proti AI nebo druhému hráči</li>  <!-- Funkce 1 -->
             <li>AI využívá algoritmus sledování míčku</li>  <!-- Funkce 2 -->
             <li>Ukládání skóre hráčů</li>  <!-- Funkce 3 -->
             <li>Přihlášení uživatele</li>  <!-- Funkce 4 -->
+            
         </ul>
 
         <h2>Algoritmy a knihovny:</h2>  <!-- Nadpis pro algoritmy a knihovny -->
         <ul>
-            <li><b>Knihovny:</b> Pygame, PyQt5</li>  <!-- Seznam knihoven -->
+            <li><b>Knihovny:</b> Pygame, PyQt5, Mariadb, sys, re</li>  <!-- Seznam knihoven -->
             <li><b>AI Algoritmus:</b> Sledování pozice míčku</li>  <!-- Seznam AI algoritmů -->
             <li><b>Kolize:</b> Detekce kolize míčku s hráčem a zdmi</li>  <!-- Seznam kolizních detekcí -->
         </ul>
@@ -170,6 +286,7 @@
         <button class="btn-logout" onclick="logout()">Odhlásit se</button>
     </div>
 </div>
+
 
 <script>
     function showRegister() {
@@ -235,5 +352,12 @@
 
     checkLogin();
 </script>
+    <!-- Ukončení spojeni s databází-->
+    <?php $conn -> close();?>
+    </main>
+    <!-- Footer, kde se bude měnit rok automaticky.-->
+    <footer>
+        <div class="text-center p-3" style="background-color: rgba(0,0,0,0.05)">&copy; <?php echo date("Y"); ?> Radovan Todorov, všechna práva vyhrazena.</div>
+    </footer>
 </body>
 </html>
