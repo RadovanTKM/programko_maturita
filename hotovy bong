@@ -3,6 +3,7 @@ import pygame
 from PyQt5.QtWidgets import QApplication, QMessageBox
 import sys
 import re
+import mariadb
 
 
 # Inicializace PyQt aplikace
@@ -48,9 +49,27 @@ konec_hry = False
 konec_W = False
 jméno_hráče = ''
 jméno_hráče2= ''
+userID = 0
+highest_score = 0
 
 
+# vytvoření spojení s db
+try:
+    conn = mariadb.connect(
+        user="student13",
+        password="spsnet",
+        host="dbs.spskladno.cz",
+        port=3306,
+        database="vyuka13"
+    )
+    print("Connected to MariaDB!")
+    cursor = conn.cursor()
+    cursor.execute('CREATE TABLE IF NOT EXISTS `1AUsers` (user_id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(255))')
+    cursor.execute('CREATE TABLE IF NOT EXISTS `1AScores` (id INT PRIMARY KEY AUTO_INCREMENT, user_id INT, score INT, FOREIGN KEY (user_id) REFERENCES `1AUsers`(user_id) ON DELETE CASCADE ON UPDATE CASCADE);')
+    conn.commit()
 
+except mariadb.Error as e:
+    print(f"Error connecting to MariaDB: {e}")
 
 
 # Funkce pro uložení nového skóre do souboru pro herni rezim hrac vs pocitac
@@ -109,6 +128,47 @@ def save_high_score_pvp(jméno_hráče, skóre1, jméno_hráče2, skóre2):
     except FileNotFoundError:
         with open("high_score_pvp.txt", "w", encoding="utf-8") as file:
             file.write(f"Hráč:{jméno_hráče} skóre: {skóre1} vs Hráč2:{jméno_hráče2} skóre: {skóre2}\n")
+            
+            
+def update_user_id(username):
+    cursor.execute('SELECT user_id FROM `1AUsers` WHERE username = ?', (username,))
+    conn.commit()
+    tempId = cursor.fetchone()
+    if tempId is None:
+        print(f"Inserting {username} into database...")
+        cursor.execute('INSERT INTO `1AUsers` (username) VALUES (?)', (username,))
+        conn.commit()
+        update_user_id(username)
+    else:
+        global userID
+        userID = tempId[0]
+        print(f"Logged as {username} ({userID})")
+    return(userID)
+
+def update_highest_score():
+    print(f"Getting high skóre of user {userID}...")
+    cursor.execute('SELECT MAX(score) FROM `1AScores` WHERE user_id = ?;', (userID,))
+    conn.commit()
+    skóre = cursor.fetchone()
+    if skóre is None:
+        print("Nebylo nalezeno žádné skóre pro uživatele #", userID)
+        highest_score = 0
+    else:
+        highest_score = skóre[0]
+        print(f"High skóre: {highest_score}")
+        
+# Uloží skóre
+already_saved = False
+def save_score(userID, skóre):
+    global already_saved
+    if (skóre < 1):
+        return
+    if already_saved:
+        return
+    already_saved = True
+    print(f"Inserting skóre {skóre} for user {userID} into database...")
+    cursor.execute('INSERT INTO `1AScores` (user_id, score) VALUES (?, ?)', (userID,skóre)) # Vloží skóre hráče
+    conn.commit()
 
             
 # přihlašení hráče
@@ -182,7 +242,7 @@ def přihlašovací_obrazovka(nadpis):
                     else:  # Pokud je aktivní vstup heslo
                         heslo += event.unicode  # Přidání znaku do hesla
 
-
+    
         timer.tick(framerate)
         pygame.display.flip()
         
@@ -364,7 +424,7 @@ while running: # loop který pořad běžý dokud je running True
     
     if rezim_hry == 'pc':
         počítač = pygame.draw.rect(screen, white, [285, počítač_y, 10, 40])
-        text_skóre = font.render(f'Skóre: {skóre}', True, white)
+        text_skóre = font.render(f'skóre: {skóre}', True, white)
         screen.blit(text_skóre, (110, 5))
         text_jméno = font.render(f'Hráč: {jméno_hráče}', True, white)
         screen.blit(text_jméno, (110, 30))
@@ -426,6 +486,9 @@ while running: # loop který pořad běžý dokud je running True
             směr_x_míčku, skóre, barva_míčku = kontrola_kolize(míček, hráč, hráč2, směr_x_míčku, skóre)
 
     if konec_hry:
+        userid = update_user_id(jméno_hráče)
+        print(userid)
+        save_score(userid, skóre)
         save_high_score(jméno_hráče, skóre)      
         if not show_game_over_popup(jméno_hráče, skóre, rezim_hry):
             running = False
