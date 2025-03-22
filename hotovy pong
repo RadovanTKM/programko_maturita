@@ -1,3 +1,15 @@
+"""
+Pong hra v Pythonu s použitím Pygame a PyQt.
+Obsahuje režimy:
+1. Hráč vs. Počítač
+2. Hráč vs. Hráč
+
+Umožňuje:
+- Přihlašování uživatelů
+- Ukládání skóre do databáze MariaDB a souborů
+- Zobrazení menu a výherních obrazovek
+"""
+
 from random import randint
 import pygame
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -9,24 +21,29 @@ import mariadb
 # Inicializace PyQt aplikace
 app = QApplication(sys.argv)
 
+# Inicializace Pygame
+
 pygame.init()
 
-# oblíbené barvy
+# barvy
 black = (0,0,0)
 white = (255, 255, 255)
 red = (239, 20, 26)
 green = (15, 207, 20)
 
-# okna
+# nastavení okna
 SIRKA, VYSKA = 300, 300
 screen = pygame.display.set_mode([SIRKA, VYSKA], pygame.SCALED)
 pygame.display.set_caption('The Best Pong On Earth')
 
+# Herní časovač a FPS
 timer = pygame.time.Clock()
 framerate = 60
+
+# Načtení fontu
 font = pygame.font.Font('obrazek1.ttf', 20)  # druhý člen je velikost fontu
 
-# vlastnosti
+# hlavní proměne
 hráč_y = 130
 hráč2_y = 130
 počítač_y = 130
@@ -53,7 +70,7 @@ userID = 0
 highest_score = 0
 
 
-# vytvoření spojení s db
+# vytvoření spojení s db (MaridaDB)
 try:
     conn = mariadb.connect(
         user="student13",
@@ -64,6 +81,8 @@ try:
     )
     print("Connected to MariaDB!")
     cursor = conn.cursor()
+    
+    # Vytvoření tabulek, pokud neexistují
     cursor.execute('CREATE TABLE IF NOT EXISTS `1AUsers` (user_id INT PRIMARY KEY AUTO_INCREMENT, username VARCHAR(255))')
     cursor.execute('CREATE TABLE IF NOT EXISTS `1AScores` (id INT PRIMARY KEY AUTO_INCREMENT, user_id INT, score INT, FOREIGN KEY (user_id) REFERENCES `1AUsers`(user_id) ON DELETE CASCADE ON UPDATE CASCADE);')
     conn.commit()
@@ -74,6 +93,11 @@ except mariadb.Error as e:
 
 # Funkce pro uložení nového skóre do souboru pro herni rezim hrac vs pocitac
 def save_high_score(jméno_hráče, skóre):
+    """
+    Uloží skóre hráče do souboru 'high_score_solo.txt'.
+    Pokud hráč už má záznam, aktualizuje skóre, pokud je nové skóre vyšší.
+    Uchovává pouze 10 nejlepších skóre.
+    """
     try:
         # Načtení aktuálních skóre
         with open("high_score_solo.txt", "r") as file:
@@ -108,6 +132,10 @@ def save_high_score(jméno_hráče, skóre):
             
             
 def save_high_score_pvp(jméno_hráče, skóre1, jméno_hráče2, skóre2):
+    """
+    Uloží skóre obou hráčů v PvP režimu do souboru 'high_score_pvp.txt'.
+    Uchovává pouze 10 nejlepších skore.
+    """
     try:
         with open("high_score_pvp.txt", "r", encoding="utf-8") as file:
             high_scores = file.readlines()
@@ -131,6 +159,9 @@ def save_high_score_pvp(jméno_hráče, skóre1, jméno_hráče2, skóre2):
             
             
 def update_user_id(username):
+    """
+    Najde ID hráče v databázi. Pokud neexistuje, vytvoří nový záznam.
+    """
     cursor.execute('SELECT user_id FROM `1AUsers` WHERE username = ?', (username,))
     conn.commit()
     tempId = cursor.fetchone()
@@ -138,7 +169,7 @@ def update_user_id(username):
         print(f"Inserting {username} into database...")
         cursor.execute('INSERT INTO `1AUsers` (username) VALUES (?)', (username,))
         conn.commit()
-        update_user_id(username)
+        update_user_id(username) # Rekurzivně zavolá, aby načetlo nové ID
     else:
         global userID
         userID = tempId[0]
@@ -146,6 +177,9 @@ def update_user_id(username):
     return(userID)
 
 def update_highest_score():
+    """
+    Získá nejvyšší skóre daného hráče z databáze.
+    """
     print(f"Getting high skóre of user {userID}...")
     cursor.execute('SELECT MAX(score) FROM `1AScores` WHERE user_id = ?;', (userID,))
     conn.commit()
