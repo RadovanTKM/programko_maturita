@@ -13,6 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
         if ($username === "admin" && $password === "admin") {
             $_SESSION["admin"] = true;
+            header("Location: index.php"); // Přesměrování na hlavní stránku
             echo "Byl jsi přihlášen.";
         } else {
             echo("Špatné jméno nebo heslo!");
@@ -22,7 +23,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Když uživatel klikne na tlačítko odhlásit tak to odhlásí uživatele, smaže session a vrátí na hlavní stránku.
 if (isset($_GET["logout"])) {
-    session_destroy();
+    session_start(); // Přidáno pro jistotu, pokud session není spuštěná
+    session_unset(); // Odstraní všechny session proměnné
+    session_destroy(); // Zničí session
     header("Location: index.php");
     exit();
 }
@@ -196,14 +199,73 @@ if (isset($_GET["logout"])) {
             width: 100%;
             padding: 0 10px;
     }
+    #admin-login-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        display: none;
+        z-index: 2000;
+    }
+
+    .admin-modal-content {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .admin-login-btn {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(90deg, #ff512f, #dd2476);
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        transition: 0.3s;
+        z-index: 1000; /* Aby bylo vždy nad ostatním obsahem */
+    }
+
+    .admin-login-btn:hover {
+        background: #bd2130;
+        transform: scale(1.1);
+    }
     </style>
 </head>
 <body>
+
+    <button class="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>
+
+    <?php if (isset($_SESSION["admin"])): ?>
+        <button class="btn-logout" onclick="window.location.href='index.php?logout=true'">🚪 Odhlásit</button>
+    <?php endif; ?>
 
     <div class="container" id="main-container">
     <h1>The Best Pong On Earth</h1>
     <p>Klasická hra Pong s AI a PvP!</p>
 
+    <div id="admin-login-modal" class="hidden">
+        <div class="admin-modal-content">
+            <h2>Admin Přihlášení</h2>
+            <form method="POST">
+                <input type="text" name="username" class="input-box" placeholder="Uživatelské jméno">
+                <input type="password" name="password" class="input-box" placeholder="Heslo">
+                <br>
+                <button type="submit" class="btn-login">Přihlásit</button>
+                <button type="button" class="btn-logout" onclick="hideAdminLogin()">Zavřít</button>
+            </form>
+        </div>
+    </div>
+
+    <?php if (!isset($_SESSION["admin"]) && !isset($_SESSION["user"])): ?>
     <div id="auth-section" class="fade show">
         <h2>Přihlášení</h2>
         <input type="text" id="login-username" class="input-box" placeholder="Uživatelské jméno">
@@ -212,6 +274,7 @@ if (isset($_GET["logout"])) {
         <button class="btn-login" onclick="login()">Přihlásit se</button>
         <p>Nemáte účet? <a href="#" onclick="showRegister()" style="color: orange;">Zaregistruj se</a></p>
     </div>
+    <?php endif; ?>
 
     <div id="register-section" class="hidden">
         <h2>Registrace</h2>
@@ -222,7 +285,7 @@ if (isset($_GET["logout"])) {
         <p>Již máte účet? <a href="#" onclick="showLogin()" style="color: yellow;">Přihlaste se</a></p>
     </div>
 
-    <div id="user-content" class="hidden">
+    <div id="user-content" class="">
         <h2>Vítejte, <span id="username-display"></span>!</h2>
         <!-- Tabulka se záznamy-->
 <div class="container w-50 p-4">
@@ -289,6 +352,14 @@ if (isset($_GET["logout"])) {
 
 
 <script>
+    function showAdminLogin() {
+    document.getElementById("admin-login-modal").style.display = "block";
+    }
+
+    function hideAdminLogin() {
+        document.getElementById("admin-login-modal").style.display = "none";
+    }
+
     function showRegister() {
         document.getElementById("auth-section").classList.add("hidden");
         document.getElementById("register-section").classList.remove("hidden");
