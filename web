@@ -3,7 +3,14 @@
 // Spustí se sekce.
 session_start();
 
+// Připojení souboru s funkcemi
 include "functions.php"; 
+
+/**
+ * Zpracování přihlašovacího formuláře
+ * Pokud je metoda požadavku POST a jsou odeslány hodnoty username a password,
+ * provede se ověření přihlašovacích údajů.
+ */
 
 // Podmínky pro přihlášení, pokud se uživatel jmenuje admin a heslo je admin tak to přihlásí do session. Pokud je špatně přihlášení tak to nepřihlásí a napíše to.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -11,32 +18,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $username = trim($_POST["username"]);
         $password = trim($_POST["password"]);
     
+        // Ověření správnosti přihlašovacích údajů
         if ($username === "admin" && $password === "admin") {
             $_SESSION["admin"] = true;
             header("Location: index.php"); // Přesměrování na hlavní stránku
             echo "Byl jsi přihlášen.";
         } else {
-            echo("Špatné jméno nebo heslo!");
+            echo("Špatné jméno nebo heslo!"); // Chybová zpráva při špatném přihlášení
         }
     }
 }
+
+/**
+ * Odhlášení uživatele
+ * Pokud je v URL parametr logout, provede se zrušení session
+ * a přesměrování na hlavní stránku.
+ */
 
 // Když uživatel klikne na tlačítko odhlásit tak to odhlásí uživatele, smaže session a vrátí na hlavní stránku.
 if (isset($_GET["logout"])) {
     session_start(); // Přidáno pro jistotu, pokud session není spuštěná
     session_unset(); // Odstraní všechny session proměnné
     session_destroy(); // Zničí session
-    header("Location: index.php");
+    header("Location: index.php"); // Přesměrování na hlavní stránku
     exit();
 }
 
-    // Dotaz na získání dat
+    /**
+     * SQL dotaz pro získání seznamu uživatelů a jejich nejvyššího skóre
+     * Data se získávají z tabulek 1AUsers a 1AScores
+     * Výstup je setříděný sestupně podle skóre.
+     */
     $sql = "SELECT u.user_id, u.username, MAX(s.score) AS score
             FROM 1AUsers u
             INNER JOIN 1AScores s ON u.user_id = s.user_id
             GROUP BY u.user_id, u.username
             ORDER BY score DESC;";
-    $result = $conn->query($sql);
+
+    $result = $conn->query($sql);// Provedení dotaz
 
 ?>
 
@@ -50,22 +69,22 @@ if (isset($_GET["logout"])) {
     <title>The Best Pong On Earth</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: white;
-            text-align: center;
+            font-family: Arial, sans-serif; /* Nastavení základního písma */
+            background: linear-gradient(135deg, #1a1a2e, #16213e); /* Barevný přechod pozadí */
+            color: white; /* Barva textu */
+            text-align: center; /* Zarovnání textu na střed */
             margin: 0;
             padding: 0;
         }
 
         .container {
-            width: 60%;
-            margin: 5% auto;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
+            width: 60%; /* Šířka hlavního kontejneru */
+            margin: 5% auto; /* Zarovnání na střed s horním okrajem */
+            background: rgba(255, 255, 255, 0.1); /* Průhledné pozadí */
+            padding: 30px; /* Vnitřní odsazení */
+            border-radius: 15px; /* Zaoblené rohy */
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5); /* Stín okolo */
+            backdrop-filter: blur(10px); /* Rozmazání pozadí */
             opacity: 0;
             transform: translateY(-20px);
             animation: fadeIn 1s forwards;
@@ -86,15 +105,15 @@ if (isset($_GET["logout"])) {
         }
 
         h1 {
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #ff512f, #dd2476);
+            font-size: 2.5em; /* Velikost nadpisu */
+            background: linear-gradient(45deg, #ff512f, #dd2476); /* Barevný efekt textu */
             background-clip: text; /* Standardní vlastnost */
             -webkit-background-clip: text; /* Pro WebKit prohlížeče */
             color: transparent;
         }
 
         .hidden {
-            display: none;
+            display: none; /* Skrytý prvek */
         }
 
         .fade {
@@ -108,18 +127,18 @@ if (isset($_GET["logout"])) {
         }
 
         button {
-            padding: 12px 25px;
+            padding: 12px 25px; /* Větší tlačítka pro lepší viditelnost */
             margin: 15px;
             border: none;
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 25px;
+            border-radius: 25px; /* Zaoblené rohy tlačítka */
             transition: 0.3s;
         }
 
         .btn-login {
-            background: linear-gradient(90deg, #28a745, #218838);
+            background: linear-gradient(90deg, #28a745, #218838); /* Zelené tlačítko */
             color: white;
         }
         .btn-login:hover {
@@ -128,7 +147,7 @@ if (isset($_GET["logout"])) {
         }
         
         .btn-logout {
-            background: linear-gradient(90deg, #dc3545, #c82333);
+            background: linear-gradient(90deg, #dc3545, #c82333); /* Červené tlačítko */
             color: white;
         }
         .btn-logout:hover {
@@ -274,9 +293,11 @@ if (isset($_GET["logout"])) {
 </head>
 <body>
 
+    <!-- Tlačítko pro přihlášení admina -->
     <button class="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>
 
     <?php if (isset($_SESSION["admin"])): ?>
+        <!-- Tlačítko pro odhlášení admina -->
         <button class="btn-logout" onclick="window.location.href='index.php?logout=true'">🚪 Odhlásit</button>
     <?php endif; ?>
 
@@ -284,42 +305,69 @@ if (isset($_GET["logout"])) {
     <h1>The Best Pong On Earth</h1>
     <p>Klasická hra Pong s AI a PvP!</p>
 
+    <!-- Přihlašovací formulář pro admina -->
     <div id="admin-login-modal" class="hidden">
         <div class="admin-modal-content">
             <h2>Admin Přihlášení</h2>
             <form method="POST">
+
+                <!-- Pole pro zadání uživatelského jména -->
                 <input type="text" name="username" class="input-box" placeholder="Uživatelské jméno">
+
+                <!-- Pole pro zadání hesla -->
                 <input type="password" name="password" class="input-box" placeholder="Heslo">
                 <br>
+
+                <!-- Tlačítko pro přihlášení -->
                 <button type="submit" class="btn-login">Přihlásit</button>
+
+                <!-- Tlačítko pro zavření okna -->
                 <button type="button" class="btn-logout" onclick="hideAdminLogin()">Zavřít</button>
             </form>
         </div>
     </div>
 
     <?php if (!isset($_SESSION["admin"]) && !isset($_SESSION["user"])): ?>
-    <div id="auth-section" class="fade show">
-        <h2>Přihlášení</h2>
-        <input type="text" id="login-username" class="input-box" placeholder="Uživatelské jméno">
-        <input type="password" id="login-password" class="input-box" placeholder="Heslo">
-        <br>
-        <button class="btn-login" onclick="login()">Přihlásit se</button>
-        <p>Nemáte účet? <a href="#" onclick="showRegister()" style="color: orange;">Zaregistruj se</a></p>
-    </div>
+    <!-- Sekce pro běžné přihlášení uživatele -->
+        <div id="auth-section" class="fade show">
+            <h2>Přihlášení</h2>
+
+            <!-- Pole pro zadání uživatelského jména -->
+            <input type="text" id="login-username" class="input-box" placeholder="Uživatelské jméno">
+            
+            <!-- Pole pro zadání hesla -->
+            <input type="password" id="login-password" class="input-box" placeholder="Heslo">
+            <br>
+
+            <!-- Tlačítko pro přihlášení -->
+            <button class="btn-login" onclick="login()">Přihlásit se</button>
+
+            <!-- Odkaz na registraci pro nové uživatele -->
+            <p>Nemáte účet? <a href="#" onclick="showRegister()" style="color: orange;">Zaregistruj se</a></p>
+        </div>
     <?php endif; ?>
 
+    <!-- Sekce pro registraci nového uživatele -->
     <div id="register-section" class="hidden">
         <h2>Registrace</h2>
+
+        <!-- Pole pro zadání nového uživatelského jména -->
         <input type="text" id="register-username" class="input-box" placeholder="Zvolte uživatelské jméno">
+
+        <!-- Pole pro zadání nového hesla -->
         <input type="password" id="register-password" class="input-box" placeholder="Zvolte heslo">
         <br>
+
+        <!-- Tlačítko pro registraci -->
         <button class="btn-login" onclick="register()">Registrovat</button>
+
+        <!-- Odkaz pro přepnutí zpět na přihlášení -->
         <p>Již máte účet? <a href="#" onclick="showLogin()" style="color: yellow;">Přihlaste se</a></p>
     </div>
 
     <div id="user-content" class="">
         <h2>Vítejte <span id="username-display"></span>!</h2>
-        <!-- Tabulka se záznamy-->
+        <!-- Tabulka se záznamy hráčů a jejich skóre-->
 <div class="container w-50 p-4">
         <table class="table table-bordered table-striped">
             <thead>
@@ -365,16 +413,14 @@ if (isset($_GET["logout"])) {
 
             <b>Hra zahrnuje:</b> <br>
             - Přihlašování uživatelů přes Pygame UI. <br>
-            - Ukládání skóre do databáze MariaDB a do souborů. <br>
             - Dynamické menu s možností výběru herního režimu. <br>
-            - AI řízený protihráč se sledováním pohybu míčku. <br>
             - Zobrazení výsledků pomocí PyQt zpráv. <br>
         </p>
     </div>
 
         <h2>Seznam funkcí hry:</h2>  <!-- Nadpis pro seznam funkcí -->
         <ul>
-            <li><b>M</b>ožnost hry proti AI(zapisuje se to txt souboru a take do databaze a následně na web) nebo pvp(zapisuje pouze do txt souboru)</li>  <!-- Funkce 0 -->
+            <li><b>M</b>ožnost hry proti AI(zapisuje skóre do txt souboru, do databaze a následně na web), pvp(zapisuje do txt souboru)</li>  <!-- Funkce 0 -->
             <li><b>K</b>aždý hráč může mít více záznamů v tabulce skore , což odpovídá vztahu 1:N</li>  <!-- Funkce 1 -->
             <li><b>U</b>kládání skóre hráčů do txt souboru a do databáze</li> <!-- Funkce 2 --> 
             <li><b>AI</b> využívá algoritmus sledování míčku</li> <!-- Funkce 3 -->
@@ -417,31 +463,51 @@ if (isset($_GET["logout"])) {
 
 
 <script>
+    /**
+     * Zobrazí okno pro přihlášení admina.
+     */
     function showAdminLogin() {
     document.getElementById("admin-login-modal").style.display = "block";
     }
 
+    /**
+     * Skryje okno pro přihlášení admina.
+     */
     function hideAdminLogin() {
         document.getElementById("admin-login-modal").style.display = "none";
     }
 
+    /**
+     * Zobrazí okno pro přihlášení admina a posune stránku na toto okno.
+     */
     function showAdminLogin() {
         let modal = document.getElementById("admin-login-modal");
         modal.style.display = "block";
         modal.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
+    /**
+     * Zobrazí registrační sekci a skryje sekci pro přihlášení.
+     */
     function showRegister() {
         document.getElementById("auth-section").classList.add("hidden");
         document.getElementById("register-section").classList.remove("hidden");
         document.getElementById("register-section").classList.add("show");
     }
 
+    /**
+     * Zobrazí sekci pro přihlášení a skryje registrační sekci.
+     */
     function showLogin() {
         document.getElementById("auth-section").classList.remove("hidden");
         document.getElementById("register-section").classList.add("hidden");
     }
 
+    /**
+     * Umožňuje registraci uživatele.
+     * Uloží uživatelské jméno a heslo do localStorage,
+     * pokud uživatel ještě neexistuje.
+     */
     function register() {
         let username = document.getElementById("register-username").value;
         let password = document.getElementById("register-password").value;
@@ -458,6 +524,9 @@ if (isset($_GET["logout"])) {
         showLogin();
     }
 
+    /**
+     * Přihlásí uživatele ověřením jeho jména a hesla uloženého v localStorage.
+     */
     function login() {
         let username = document.getElementById("login-username").value;
         let password = document.getElementById("login-password").value;
@@ -474,11 +543,18 @@ if (isset($_GET["logout"])) {
         checkLogin();
     }
 
+    /**
+     * Odhlásí uživatele odstraněním jeho jména ze session (localStorage).
+     */
     function logout() {
         localStorage.removeItem("loggedInUser");
         checkLogin();
     }
 
+    /**
+     * Kontroluje, zda je uživatel přihlášen,
+     * a podle toho zobrazuje nebo skrývá příslušné sekce na stránce.
+     */
     function checkLogin() {
         let loggedInUser = localStorage.getItem("loggedInUser");
         if (loggedInUser) {
