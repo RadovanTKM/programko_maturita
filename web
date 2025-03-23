@@ -238,6 +238,38 @@ if (isset($_GET["logout"])) {
         background: #bd2130;
         transform: scale(1.1);
     }
+
+    .image-container {
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .image-container img {
+        width: 35%; /* Menší velikost obrázků */
+        max-width: 500px; /* Maximální šířka pro lepší vzhled */
+        border-radius: 15px;
+        box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease;
+        display: block;
+        margin: 15px auto;
+    }
+
+    .image-container img:hover {
+        transform: scale(1.20);
+    }
+
+    .orange-box {
+        border: 3px solid orange; /* Oranžový rámeček */
+        padding: 15px; /* Vnitřní okraj */
+        border-radius: 10px; /* Zaoblené rohy */
+        background-color: rgba(255, 165, 0, 0.1); /* Světle oranžové pozadí */
+        color: white; /* Bílý text pro lepší čitelnost */
+        font-family: Arial, sans-serif; /* Pěkné písmo */
+        text-align: center; /* Zarovnání na střed */
+        width: 60%; /* Šířka 60% obrazovky */
+        margin: 20px auto; /* Zarovnání na střed */
+        box-shadow: 0px 0px 15px rgba(255, 140, 0, 0.4); /* Jemný oranžový stín */
+    }
     </style>
 </head>
 <body>
@@ -286,7 +318,7 @@ if (isset($_GET["logout"])) {
     </div>
 
     <div id="user-content" class="">
-        <h2>Vítejte, <span id="username-display"></span>!</h2>
+        <h2>Vítejte <span id="username-display"></span>!</h2>
         <!-- Tabulka se záznamy-->
 <div class="container w-50 p-4">
         <table class="table table-bordered table-striped">
@@ -321,29 +353,62 @@ if (isset($_GET["logout"])) {
     </div>
 
     <hr>
+
+    <div class="orange-box">
+        <h2>Popis programu (Pong hra)</h2>
+        <p>
+            Tento program je <b>Pong hra</b>, která byla napsána v Pythonu s použitím Pygame a PyQt. <br>
+            Hráč si může vybrat mezi dvěma herními režimy: <br><br>
+
+            <b>Hráč vs. Počítač</b> – hráč hraje proti AI. <br>
+            <b>Hráč vs. Hráč</b> – dva hráči proti sobě na jednom zařízení. <br><br>
+
+            <b>Hra zahrnuje:</b> <br>
+            - Přihlašování uživatelů přes Pygame UI. <br>
+            - Ukládání skóre do databáze MariaDB a do souborů. <br>
+            - Dynamické menu s možností výběru herního režimu. <br>
+            - AI řízený protihráč se sledováním pohybu míčku. <br>
+            - Zobrazení výsledků pomocí PyQt zpráv. <br>
+        </p>
+    </div>
+
         <h2>Seznam funkcí hry:</h2>  <!-- Nadpis pro seznam funkcí -->
         <ul>
-            <li>Každý hráč může mít více záznamů v tabulce skore , což odpovídá vztahu 1:N</li>  <!-- Funkce 0 -->
-            <li>Možnost hry proti AI nebo druhému hráči</li>  <!-- Funkce 1 -->
-            <li>AI využívá algoritmus sledování míčku</li>  <!-- Funkce 2 -->
-            <li>Ukládání skóre hráčů</li>  <!-- Funkce 3 -->
-            <li>Přihlášení uživatele</li>  <!-- Funkce 4 -->
+            <li><b>M</b>ožnost hry proti AI(zapisuje se to txt souboru a take do databaze a následně na web) nebo pvp(zapisuje pouze do txt souboru)</li>  <!-- Funkce 0 -->
+            <li><b>K</b>aždý hráč může mít více záznamů v tabulce skore , což odpovídá vztahu 1:N</li>  <!-- Funkce 1 -->
+            <li><b>U</b>kládání skóre hráčů do txt souboru a do databáze</li> <!-- Funkce 2 --> 
+            <li><b>AI</b> využívá algoritmus sledování míčku</li> <!-- Funkce 3 -->
+            <li><b>P</b>řihlášení uživatele</li>  <!-- Funkce 4 -->
             
         </ul>
 
         <h2>Algoritmy a knihovny:</h2>  <!-- Nadpis pro algoritmy a knihovny -->
         <ul>
-            <li><b>Knihovny:</b> Pygame, PyQt5, Mariadb, sys, re</li>  <!-- Seznam knihoven -->
+            <li><b>Knihovny:</b> Pygame, PyQt5, Mariadb, sys, re, random(randint)</li>  <!-- Seznam knihoven -->
             <li><b>AI Algoritmus:</b> Sledování pozice míčku</li>  <!-- Seznam AI algoritmů -->
             <li><b>Kolize:</b> Detekce kolize míčku s hráčem a zdmi</li>  <!-- Seznam kolizních detekcí -->
+            <li><b>Smart_ai:</b> Algoritmus pohybu míčku</li>  
+            <li><b>Dynamická změna obtížnosti:</b> Zvyšování rychlosti míčku</li>  
+            <li><b>Databáze MariaDB:</b> Ukládání a načítaní skóre hráču</li>
+            <li><b>Ukládání skóre do txt souboru:</b> Čte, zapisuje a aktualizuje skóre. Používá řazení sorting, uchovává pouze TOP 10 skóre</li>
+
+
         </ul>
+
+        <div class="image-container">
+            <h2>ER Diagram</h2>
+            <img src="erdiagram.png" alt="ER Diagram">
+
+            <h2>Vývojový Diagram</h2>
+            <img src="Vdiagram.png" alt="Vývojový Diagram">
+        </div>
 
         <h2>Autoři:</h2>  <!-- Nadpis pro autory -->
         <p>Jméno autora: (Radovan Todorov)</p>  <!-- Jméno autora -->
 
         <h2>Odkaz na stažení:</h2>  <!-- Nadpis pro GitHub odkaz -->
         <!-- Odkaz na GitHub repo -->
-        <a href="https://github.com/RadovanTKM/programko_maturita/tree/main" target="_blank" style="color: lightblue;">GitHub Repozitář</a>
+        <a href="https://github.com/RadovanTKM/programko_maturita/tree/main" target="_blank" style="color: #39FF14;">GitHub Repozitář</a>
 
         <br><br>
         <button class="btn-logout" onclick="logout()">Odhlásit se</button>
@@ -358,6 +423,12 @@ if (isset($_GET["logout"])) {
 
     function hideAdminLogin() {
         document.getElementById("admin-login-modal").style.display = "none";
+    }
+
+    function showAdminLogin() {
+        let modal = document.getElementById("admin-login-modal");
+        modal.style.display = "block";
+        modal.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
     function showRegister() {
