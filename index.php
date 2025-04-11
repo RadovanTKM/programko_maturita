@@ -457,7 +457,9 @@ if (isset($_GET["logout"])) {
         <a href="https://github.com/RadovanTKM/programko_maturita/tree/main" target="_blank" style="color: #39FF14;">GitHub Repozitář</a>
 
         <br><br>
-        <button class="btn-logout" onclick="logout()">Odhlásit se</button>
+        <?php if (!isset($_SESSION["admin"])): ?>   
+            <button class="btn-logout" onclick="logout()">Odhlásit se</button>
+        <?php endif; ?>
     </div>
 </div>
 
